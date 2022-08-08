@@ -1,3 +1,2 @@
 # AML-single-cell-analysis
-Hello world
-hello everybody
+Recurrent autoencoder based AML data analysis
