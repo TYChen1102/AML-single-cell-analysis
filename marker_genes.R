@@ -70,6 +70,7 @@ select.DEG <- DEG.matrix[,marker.all]
 #gene.order <- DEG[DEG$sig == "up", "DE_results.Gene_name"]
 
 library(dplyr)
+library(reshape2)
 #rownames(select.genes) <- c(1:nrow(select.genes))
 select.DEG <- select.DEG %>% mutate(B=rownames(select.DEG)) %>% melt()
 colnames(select.DEG)[3] <- "z_score"
