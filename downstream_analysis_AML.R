@@ -199,3 +199,103 @@ select.expression <- latent.sample[,select.genes]
 latent.small <- cbind(latent.small, select.expression)
 
 write.table(latent.small, file='AML_data/AML707B/all/AML707B-all_latent_small_tcells.csv', quote=FALSE, sep='\t', col.names = colnames(latent.small))
+
+
+sample.labels <- read.table("AML_data/AML707B/all/AML707B-all_celltype_sample.csv", sep="\t", header=TRUE)
+sample.labels <- as.data.frame(t(sample.labels))
+sample.labels <- sample.labels[2:nrow(sample.labels),]
+latent$sample <- as.character(sample.labels)
+
+latent$D0 <- latent$sample == "D0"
+latent$D0[latent$D0 == TRUE] <- "D0"
+latent$D0[latent$D0 == FALSE] <- "All cells"
+latent$D18 <- latent$sample == "D18"
+latent$D18[latent$D18 == TRUE] <- "D18"
+latent$D18[latent$D18 == FALSE] <- "All cells"
+latent$D41 <- latent$sample == "D41"
+latent$D41[latent$D41 == TRUE] <- "D41"
+latent$D41[latent$D41 == FALSE] <- "All cells"
+latent$D97 <- latent$sample == "D97"
+latent$D97[latent$D97 == TRUE] <- "D97"
+latent$D97[latent$D97 == FALSE] <- "All cells"
+latent$D113 <- latent$sample == "D113"
+latent$D113[latent$D113 == TRUE] <- "D113"
+latent$D113[latent$D113 == FALSE] <- "All cells"
+
+latent.sample <- latent[latent$truth == "B" | latent$truth == "lateEry" | latent$truth == "T" | latent$truth == "GMP" | latent$truth == "Mono" | latent$truth == "NK" | latent$truth == "Plasma",]
+
+p <- ggplot(data = latent.sample) + geom_point(mapping = aes(x = X0, y = X1, color = D113), size = 1)
+p <- p + guides(color=guide_legend(title = NULL)) + theme_bw()
+p <- p + theme(axis.text=element_text(size=15), axis.title=element_text(size=15), legend.text = element_text(size=15), legend.title = element_text(size=15), panel.grid.major=element_line(colour=NA), panel.background = element_rect(fill = "transparent",colour = NA), plot.background = element_rect(fill = "transparent",colour = NA), panel.grid.minor = element_blank())
+p <- p + labs(x = "t-SNE1", y = "t-SNE2")
+p <- p + scale_colour_manual(values=c("red", "gray"),breaks = c("D113","All cells"), labels = c("D113 (511 cells)","3292 cells"))
+p
+
+
+cell.by.sample <- latent.sample %>% count(new_labels, sample)
+cell.by.sample <- cell.by.sample[order(cell.by.sample$sample),]
+cell.by.sample[1:6,3] <- cell.by.sample[1:6,3]/935
+cell.by.sample[7:12,3] <- cell.by.sample[7:12,3]/511
+cell.by.sample[13:18,3] <- cell.by.sample[13:18,3]/1490
+cell.by.sample[19:23,3] <- cell.by.sample[19:23,3]/293
+cell.by.sample[24:29,3] <- cell.by.sample[24:29,3]/63
+cell.by.sample[,3] <- cell.by.sample[,3] * 100
+cell.by.sample[30,] <- c("Plasma and B cells", "D41", 0)
+cell.by.sample$n <- as.double(cell.by.sample$n)
+cell.by.sample$sample <- factor(cell.by.sample$sample, levels = c("D0", "D18", "D41", "D97", "D113"))
+
+p <- ggplot(data = cell.by.sample, aes(x = sample, y = n,  color = new_labels, group = new_labels))
+p <- p + geom_point(size = 3)
+p <- p + geom_line(size = 1)
+p <- p + guides(color=guide_legend(title = "Cells")) + theme_bw()
+p <- p + theme(axis.text=element_text(size=15), axis.title=element_text(size=15), legend.text = element_text(size=15), legend.title = element_text(size=15))
+p <- p + labs(x = "Days", y = "Proportion (%)")
+p
+
+D18 <- read.table("AML_data/AML707B/days/d0_d18.csv", sep=",", header=TRUE)
+D18 <- D18$X
+D41 <- read.table("AML_data/AML707B/days/d0_d41.csv", sep=",", header=TRUE)
+D41 <- D41$X
+D97 <- read.table("AML_data/AML707B/days/d0_d97.csv", sep=",", header=TRUE)
+D97 <- D97$X
+D113 <- read.table("AML_data/AML707B/days/d0_d113.csv", sep=",", header=TRUE)
+D113 <- D113$X
+DAY <- c(D18, D41, D97, D113)
+DAY <- unique(DAY)
+genes.days <- latent.sample$sample
+select.genes <- latent.sample[,5:(ncol(latent.sample)-1)]
+
+for(i in 1:length(DAY))
+{
+  DAY[i] <- gsub("[.]", "-", DAY[i])
+}
+
+select.genes <- select.genes[,DAY]
+select.genes <- scale(select.genes)
+genes.days <- cbind(genes.days, select.genes)
+genes.days <- as.data.frame(genes.days)
+genes.days[2:ncol(genes.days)] <- apply(genes.days[2:ncol(genes.days)], 2, as.numeric)
+
+mean.D0 <- apply(genes.days[which(genes.days$genes.days == "D0"), 2:ncol(genes.days)], 2, mean)
+mean.D18 <- apply(genes.days[which(genes.days$genes.days == "D18"), 2:ncol(genes.days)], 2, mean)
+mean.D41 <- apply(genes.days[which(genes.days$genes.days == "D41"), 2:ncol(genes.days)], 2, mean)
+mean.D97 <- apply(genes.days[which(genes.days$genes.days == "D97"), 2:ncol(genes.days)], 2, mean)
+mean.D113 <- apply(genes.days[which(genes.days$genes.days == "D113"), 2:ncol(genes.days)], 2, mean)
+
+days.matrix <- as.data.frame(matrix(data = 0, nrow = 5, ncol = length(mean.D0)))
+days.matrix[1,] <- mean.D0
+days.matrix[2,] <- mean.D18
+days.matrix[3,] <- mean.D41
+days.matrix[4,] <- mean.D97
+days.matrix[5,] <- mean.D113
+colnames(days.matrix) <- DAY
+rownames(days.matrix) <- c("D0", "D18", "D41", "D97", "D113")
+
+days.matrix.plot <- days.matrix %>% mutate(B=rownames(days.matrix)) %>% melt()
+colnames(days.matrix.plot)[3] <- "z_score"
+p <- ggplot(days.matrix.plot,aes(x=B,y=variable,fill=z_score))
+p <- p + guides(color=guide_legend(title = "Scaled expression")) + theme_bw()
+p <- p + theme(axis.text=element_text(size=5), axis.title=element_text(size=15), legend.text = element_text(size=15), legend.title = element_text(size=15), panel.grid.major=element_line(colour=NA), panel.background = element_rect(fill = "transparent",colour = NA), plot.background = element_rect(fill = "transparent",colour = NA), panel.grid.minor = element_blank())
+p <- p + geom_raster() + scale_fill_gradient2(low="blue", high="red", mid="white")
+p <- p + xlab(NULL) + ylab(NULL)
+p
