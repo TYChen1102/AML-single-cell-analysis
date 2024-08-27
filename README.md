@@ -3,4 +3,4 @@ Acute myeloid leukemia (AML) is a type of cancer with excess immature blood cell
 
 In this research, we applied a deep recurrent network architecture and autoencoder based model with modified clustering training processes for sensitive cell-type composition identification. We analyzed single-cell transcriptomics data between healthy people and AML patients before and after undergoing chemotherapy.
 
-The notebook 'RNN_clustering_final.ipynb' contains an example of data normalization, dimensionality reduction and visualization. Please feel free to change the dataset and parameters.
+The notebook 'RNN_clustering_final.ipynb' contains an example of data normalization, dimensionality reduction and visualization.
